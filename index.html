@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>วางแผนเกษียณ & โบนัส (Retirement & Bonus Planner)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent-color: #ec4899;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --card-radius: 16px;
+            --font-family: 'Kanit', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #818cf8, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-weight: 300;
+        }
+
+        /* Layout */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glass Panel */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
+            transition: transform 0.2s;
+        }
+
+        /* Input Form */
+        .input-card h2 {
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: #fff;
+            font-size: 1rem;
+            font-family: var(--font-family);
+            transition: all 0.3s;
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .cta-button {
+            width: 100%;
+            background: linear-gradient(to right, var(--primary-color), var(--primary-hover));
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-family: var(--font-family);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .retirement-info {
+            text-align: center;
+            margin-top: 1rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card h3 {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-bottom: 0.5rem;
+        }
+
+        .big-number {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: #4ade80;
+        }
+
+        .med-number {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #f8fafc;
+        }
+
+        .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            opacity: 0.8;
+        }
+
+        /* Chart Area */
+        .chart-container {
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-box {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+
+        /* Table */
+        .details-section h3 {
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: right;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        th:first-child,
+        td:first-child {
+            text-align: left;
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        td {
+            font-variant-numeric: tabular-nums;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .shine {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shine::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to bottom right,
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0) 40%,
+                    rgba(255, 255, 255, 0.1) 50%,
+                    rgba(255, 255, 255, 0) 60%,
+                    rgba(255, 255, 255, 0) 100%);
+            transform: rotate(30deg);
+            animation: shineEffect 6s infinite;
+        }
+
+        @keyframes shineEffect {
+            0% {
+                transform: translateX(-100%) rotate(30deg);
+            }
+
+            20% {
+                transform: translateX(100%) rotate(30deg);
+            }
+
+            100% {
+                transform: translateX(100%) rotate(30deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>วางแผนรายได้จนเกษียณ</h1>
+            <p>คำนวณเงินเดือน โบนัส และความมั่งคั่งสะสมถึงอายุ 55 ปี</p>
+        </header>
+
+        <main class="grid-layout">
+            <!-- Input Section -->
+            <section class="input-card glass-panel">
+                <h2><span class="icon">⚙️</span> ข้อมูลของคุณ</h2>
+                <form id="salaryForm">
+                    <div class="form-group">
+                        <label for="currentSalary">เงินเดือนปัจจุบัน (บาท)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="currentSalary" value="30000" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currentAge">อายุปัจจุบัน (ปี)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="currentAge" value="30" min="15" max="54" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="otHours">โอที (ชั่วโมง/เดือน)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="otHours" value="0" min="0" step="1">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bonusMonths">โบนัสเฉลี่ย (เดือน/ปี)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="bonusMonths" value="1" min="0" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="salaryHike">อัตราขึ้นเงินเดือนเฉลี่ย (%/ปี)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="salaryHike" value="5" min="0" step="0.1">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="cta-button">คำนวณผลลัพธ์</button>
+                    <div class="retirement-info">
+                        <small>* คำนวณจนถึงอายุเกษียณ 55 ปี</small>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Result Section -->
+            <section class="result-section">
+                <!-- Summary Cards -->
+                <div class="summary-grid">
+                    <div class="summary-card glass-panel shine">
+                        <h3>รายได้รวมทั้งหมด</h3>
+                        <p class="big-number" id="totalEarnings">-</p>
+                        <span class="label">จนถึงอายุ 55 ปี</span>
+                    </div>
+                    <div class="summary-card glass-panel">
+                        <h3>เงินเดือนปีสุดท้าย</h3>
+                        <p class="med-number" id="lastSalary">-</p>
+                        <span class="label">ที่อายุ 54 ปี</span>
+                    </div>
+                    <div class="summary-card glass-panel">
+                        <h3>โบนัสรวมทั้งหมด</h3>
+                        <p class="med-number" id="totalBonus">-</p>
+                        <span class="label">สะสมตลอดอายุงาน</span>
+                    </div>
+                </div>
+
+                <!-- Chart Container -->
+                <div class="chart-container glass-panel">
+                    <h3>แนวโน้มรายได้ (Annual Income Trend)</h3>
+                    <div class="chart-box">
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Detailed Table -->
+        <section class="details-section glass-panel">
+            <h3>ตารางแสดงรายได้รายปี (Yearly Breakdown)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>อายุ</th>
+                            <th>เงินเดือน/เดือน</th>
+                            <th>รายได้ OT/ปี</th>
+                            <th>โบนัสประจำปี</th>
+                            <th>รายได้รวมต่อปี</th>
+                            <th>รายได้สะสม</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody">
+                        <!-- Rows generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        let myChart = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('salaryForm');
+
+            // Auto-calculate on load (silent, no confetti)
+            calculateAndRender(false);
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                calculateAndRender(true); // Trigger confetti
+            });
+
+            // Optional: Add simple validation to age input to not exceed 55
+            const ageInput = document.getElementById('currentAge');
+            if (ageInput) {
+                ageInput.addEventListener('input', (e) => {
+                    if (e.target.value >= 55) {
+                        alert('โปรแกรมคำนวณถึงอายุเกษียณ 55 ปีเท่านั้น (Calculations stop at age 55)');
+                        e.target.value = 54;
+                    }
+                });
+            }
+        });
+
+        function calculateAndRender(showConfetti = false) {
+            // 1. Get Values
+            const currentSalary = parseFloat(document.getElementById('currentSalary').value) || 0;
+            const currentAge = parseInt(document.getElementById('currentAge').value) || 30;
+            const bonusMonths = parseFloat(document.getElementById('bonusMonths').value) || 0;
+            const salaryHike = parseFloat(document.getElementById('salaryHike').value) || 0;
+            const otHours = parseFloat(document.getElementById('otHours').value) || 0;
+
+            const retirementAge = 55;
+
+            if (currentAge >= retirementAge) {
+                alert('อายุต้องน้อยกว่า 55 ปี เพื่อเริ่มการคำนวณ (Age must be < 55)');
+                return;
+            }
+
+            // 2. Prepare Calculation Loop
+            let yearData = [];
+            let runningSalary = currentSalary;
+            let accumulatedIncome = 0;
+            let totalBonusAcc = 0;
+
+            for (let age = currentAge; age < retirementAge; age++) {
+                const hourlyRate = runningSalary / 30 / 8;
+                const monthlyOT = hourlyRate * 1.5 * otHours;
+                const annualOT = monthlyOT * 12;
+
+                const annualBaseSalary = runningSalary * 12;
+                const annualBonus = runningSalary * bonusMonths;
+                const totalAnnual = annualBaseSalary + annualBonus + annualOT;
+
+                accumulatedIncome += totalAnnual;
+                totalBonusAcc += annualBonus;
+
+                yearData.push({
+                    age: age,
+                    monthlySalary: runningSalary,
+                    annualOT: annualOT,
+                    annualBonus: annualBonus,
+                    totalAnnual: totalAnnual,
+                    accumulated: accumulatedIncome
+                });
+
+                runningSalary = runningSalary * (1 + (salaryHike / 100));
+            }
+
+            // 3. Render Results
+            renderSummary(yearData, accumulatedIncome, totalBonusAcc);
+            renderTable(yearData);
+            renderChart(yearData);
+
+            // 4. Wow Effect
+            if (showConfetti) {
+                triggerConfetti();
+            }
+        }
+
+        function triggerConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            var random = function (min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function () {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 50 * (timeLeft / duration);
+                // since particles fall down, start a bit higher than random
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: random(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: random(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                // Simple Easing (Quadratic)
+                const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+                const currentVal = Math.floor(easedProgress * (end - start) + start);
+                obj.textContent = currentVal.toLocaleString('th-TH', { maximumFractionDigits: 0 }) + " ฿";
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function renderSummary(data, totalInc, totalBonus) {
+            if (data.length === 0) return;
+
+            const lastYear = data[data.length - 1];
+
+            // Use animation for big numbers
+            animateValue(document.getElementById('totalEarnings'), 0, totalInc, 2000);
+            animateValue(document.getElementById('lastSalary'), 0, lastYear.monthlySalary, 1500);
+            animateValue(document.getElementById('totalBonus'), 0, totalBonus, 1500);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('resultBody');
+            tbody.innerHTML = '';
+
+            const fmt = (n) => n.toLocaleString('th-TH', { maximumFractionDigits: 0 });
+            data.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                // Stagger animation for table rows
+                tr.style.animation = `fadeInDown 0.5s ease-out forwards ${index * 0.05}s`;
+                tr.style.opacity = '0'; // Initial state
+
+                tr.innerHTML = `
+                    <td>${row.age}</td>
+                    <td>${fmt(row.monthlySalary)}</td>
+                    <td class="text-orange">${fmt(row.annualOT)}</td>
+                    <td class="text-green">${fmt(row.annualBonus)}</td>
+                    <td><strong>${fmt(row.totalAnnual)}</strong></td>
+                    <td class="text-muted">${fmt(row.accumulated)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('incomeChart');
+            if (!ctx) return;
+
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            const labels = data.map(d => `Age ${d.age}`);
+            const salaryData = data.map(d => d.monthlySalary * 12);
+            const otData = data.map(d => d.annualOT);
+            const bonusData = data.map(d => d.annualBonus);
+
+            const gradientFill = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradientFill.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
+            gradientFill.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'เงินเดือน (Annual Salary)',
+                            data: salaryData,
+                            backgroundColor: '#6366f1',
+                            stack: 'Stack 0',
+                        },
+                        {
+                            label: 'โอที (Annual OT)',
+                            data: otData,
+                            backgroundColor: '#f59e0b', // Amber/Orange
+                            stack: 'Stack 0',
+                        },
+                        {
+                            label: 'โบนัส (Annual Bonus)',
+                            data: bonusData,
+                            backgroundColor: '#10b981', // Emerald/Green
+                            borderRadius: 4,
+                            stack: 'Stack 0',
+                        }
+                    ]
+                },
+                options: {
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeOutQuart'
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            displayColors: true,
+                        },
+                        legend: {
+                            labels: {
+                                color: '#cbd5e1'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: function (value) {
+                                    return value / 1000 + 'k';
+                                }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
