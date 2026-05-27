@@ -50,6 +50,7 @@
             font-size: 2.5rem;
             font-weight: 600;
             background: linear-gradient(to right, #818cf8, #f472b6);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
@@ -182,6 +183,14 @@
             font-size: 1.5rem;
             font-weight: 500;
             color: #f8fafc;
+        }
+
+        .tax-number {
+            color: #fca5a5;
+        }
+
+        .net-number {
+            color: #67e8f9;
         }
 
         .label {
@@ -363,6 +372,11 @@
                         <span class="label">จนถึงอายุ 55 ปี</span>
                     </div>
                     <div class="summary-card glass-panel">
+                        <h3>รายได้รวมหลังหักภาษี</h3>
+                        <p class="med-number net-number" id="totalNetIncome">-</p>
+                        <span class="label">รายได้สุทธิหลังภาษีสะสม</span>
+                    </div>
+                    <div class="summary-card glass-panel">
                         <h3>เงินเดือนปีสุดท้าย</h3>
                         <p class="med-number" id="lastSalary">-</p>
                         <span class="label">ที่อายุ 54 ปี</span>
@@ -371,6 +385,11 @@
                         <h3>โบนัสรวมทั้งหมด</h3>
                         <p class="med-number" id="totalBonus">-</p>
                         <span class="label">สะสมตลอดอายุงาน</span>
+                    </div>
+                    <div class="summary-card glass-panel">
+                        <h3>ภาษีที่ต้องจ่ายรวม</h3>
+                        <p class="med-number tax-number" id="totalTax">-</p>
+                        <span class="label">หักค่าใช้จ่ายส่วนตัวปีละ 60,000 บาท</span>
                     </div>
                 </div>
 
@@ -396,7 +415,9 @@
                             <th>รายได้ OT/ปี</th>
                             <th>โบนัสประจำปี</th>
                             <th>รายได้รวมต่อปี</th>
-                            <th>รายได้สะสม</th>
+                            <th>ภาษีที่ต้องจ่าย/ปี</th>
+                            <th>รายได้สุทธิหลังภาษี/ปี</th>
+                            <th>รายได้สะสมก่อนภาษี</th>
                         </tr>
                     </thead>
                     <tbody id="resultBody">
@@ -414,6 +435,17 @@
 
     <script>
         let myChart = null;
+        const PERSONAL_EXPENSE_DEDUCTION = 60000;
+        const THAI_TAX_BRACKETS = [
+            { upperBound: 150000, rate: 0 },
+            { upperBound: 300000, rate: 0.05 },
+            { upperBound: 500000, rate: 0.10 },
+            { upperBound: 750000, rate: 0.15 },
+            { upperBound: 1000000, rate: 0.20 },
+            { upperBound: 2000000, rate: 0.25 },
+            { upperBound: 5000000, rate: 0.30 },
+            { upperBound: Infinity, rate: 0.35 }
+        ];
 
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('salaryForm');
@@ -438,6 +470,31 @@
             }
         });
 
+        function calculateThaiProgressiveTax(annualIncome) {
+            const taxableIncome = Math.max(annualIncome - PERSONAL_EXPENSE_DEDUCTION, 0);
+            let totalTax = 0;
+            let lowerBound = 0;
+
+            for (const bracket of THAI_TAX_BRACKETS) {
+                const taxableAtThisRate = Math.min(taxableIncome, bracket.upperBound) - lowerBound;
+
+                if (taxableAtThisRate > 0) {
+                    totalTax += taxableAtThisRate * bracket.rate;
+                }
+
+                if (taxableIncome <= bracket.upperBound) {
+                    break;
+                }
+
+                lowerBound = bracket.upperBound;
+            }
+
+            return {
+                taxableIncome: taxableIncome,
+                tax: totalTax
+            };
+        }
+
         function calculateAndRender(showConfetti = false) {
             // 1. Get Values
             const currentSalary = parseFloat(document.getElementById('currentSalary').value) || 0;
@@ -458,6 +515,8 @@
             let runningSalary = currentSalary;
             let accumulatedIncome = 0;
             let totalBonusAcc = 0;
+            let totalTaxAcc = 0;
+            let totalNetIncomeAcc = 0;
 
             for (let age = currentAge; age < retirementAge; age++) {
                 const hourlyRate = runningSalary / 30 / 8;
@@ -467,9 +526,13 @@
                 const annualBaseSalary = runningSalary * 12;
                 const annualBonus = runningSalary * bonusMonths;
                 const totalAnnual = annualBaseSalary + annualBonus + annualOT;
+                const taxResult = calculateThaiProgressiveTax(totalAnnual);
+                const annualNetIncome = totalAnnual - taxResult.tax;
 
                 accumulatedIncome += totalAnnual;
                 totalBonusAcc += annualBonus;
+                totalTaxAcc += taxResult.tax;
+                totalNetIncomeAcc += annualNetIncome;
 
                 yearData.push({
                     age: age,
@@ -477,6 +540,9 @@
                     annualOT: annualOT,
                     annualBonus: annualBonus,
                     totalAnnual: totalAnnual,
+                    annualTax: taxResult.tax,
+                    annualNetIncome: annualNetIncome,
+                    taxableIncome: taxResult.taxableIncome,
                     accumulated: accumulatedIncome
                 });
 
@@ -484,7 +550,7 @@
             }
 
             // 3. Render Results
-            renderSummary(yearData, accumulatedIncome, totalBonusAcc);
+            renderSummary(yearData, accumulatedIncome, totalBonusAcc, totalTaxAcc, totalNetIncomeAcc);
             renderTable(yearData);
             renderChart(yearData);
 
@@ -534,15 +600,17 @@
             window.requestAnimationFrame(step);
         }
 
-        function renderSummary(data, totalInc, totalBonus) {
+        function renderSummary(data, totalInc, totalBonus, totalTax, totalNetIncome) {
             if (data.length === 0) return;
 
             const lastYear = data[data.length - 1];
 
             // Use animation for big numbers
             animateValue(document.getElementById('totalEarnings'), 0, totalInc, 2000);
+            animateValue(document.getElementById('totalNetIncome'), 0, totalNetIncome, 1800);
             animateValue(document.getElementById('lastSalary'), 0, lastYear.monthlySalary, 1500);
             animateValue(document.getElementById('totalBonus'), 0, totalBonus, 1500);
+            animateValue(document.getElementById('totalTax'), 0, totalTax, 1500);
         }
 
         function renderTable(data) {
@@ -562,6 +630,8 @@
                     <td class="text-orange">${fmt(row.annualOT)}</td>
                     <td class="text-green">${fmt(row.annualBonus)}</td>
                     <td><strong>${fmt(row.totalAnnual)}</strong></td>
+                    <td class="tax-number">${fmt(row.annualTax)}</td>
+                    <td class="net-number"><strong>${fmt(row.annualNetIncome)}</strong></td>
                     <td class="text-muted">${fmt(row.accumulated)}</td>
                 `;
                 tbody.appendChild(tr);
